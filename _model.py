@@ -22,13 +22,13 @@ class LanguageModel(torch.nn.Module):
                 batch_first=True)
 
         self.fc_head = nn.Sequential(
-                nn.Linear(hid_dim * 2, hid_dim),
+                nn.Linear(hid_dim * 2, hid_dim), #
                 nn.BatchNorm1d(hid_dim),
                 nn.ReLU(inplace=True),
-                nn.Linear(hid_dim, hid_dim), 
+                nn.Linear(hid_dim, hid_dim), #
                 nn.BatchNorm1d(hid_dim),
                 nn.ReLU(inplace=True),
-                nn.Linear(hid_dim, hid_dim),
+                nn.Linear(hid_dim, hid_dim), #
                 nn.BatchNorm1d(hid_dim, affine=False)
                 )
         
@@ -67,10 +67,18 @@ class SMILESSiam(torch.nn.Module):
         self.use_pp_prediction = use_pp_prediction
         if use_pp_prediction:
             self.fc_pp = nn.Sequential(
-                    nn.Linear(hid_dim, hid_dim),
+                    nn.Linear(hid_dim, hid_dim), #
                     nn.BatchNorm1d(hid_dim),
-                    nn.Linear(hid_dim, hid_dim),
+                    nn.LeakyReLU(),
+                    nn.Dropout(0.3),
+                    nn.Linear(hid_dim, hid_dim), #
                     nn.BatchNorm1d(hid_dim),
+                    nn.LeakyReLU(),
+                    nn.Dropout(0.3),
+                    nn.Linear(hid_dim, hid_dim), #
+                    nn.BatchNorm1d(hid_dim),
+                    nn.LeakyReLU(),
+                    nn.Dropout(0.3),
                     nn.Linear(hid_dim, 20)
                     )
         
@@ -110,18 +118,18 @@ class SiamClf(torch.nn.Module):
         hid_dim = siam_model.hid_dim
 
         self.fc  = nn.Sequential(
-                nn.Linear(hid_dim, hid_dim),
+                nn.Linear(hid_dim, hid_dim), #
                 nn.BatchNorm1d(hid_dim),
+                nn.LeakyReLU(),
                 nn.Dropout(0.3),
-                nn.ReLU(),
-                nn.Linear(hid_dim, hid_dim),
+                nn.Linear(hid_dim, hid_dim), #
                 nn.BatchNorm1d(hid_dim),
+                nn.LeakyReLU(),
                 nn.Dropout(0.3),
-                nn.ReLU(),
-                # nn.Linear(hid_dim, hid_dim),
-                # nn.BatchNorm1d(hid_dim),
-                # nn.Dropout(0.3),
-                # nn.ReLU(),
+                nn.Linear(hid_dim, hid_dim), #
+                nn.BatchNorm1d(hid_dim),
+                nn.LeakyReLU(),
+                nn.Dropout(0.3),
                 nn.Linear(hid_dim, 1)
                 )
 

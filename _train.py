@@ -14,7 +14,7 @@ def process_siam(model, data_loader, optimizer=None, args=None):
         model.eval()
 
     criterion_1 = nn.CosineSimilarity()
-    criterion_2 = nn.MSELoss()
+    criterion_2 = nn.MSELoss(reduction='sum')
     total_loss, total_data, total_loss_siam, total_loss_pp = 0, 0, 0, 0
     start_time = time.time()
 
@@ -32,7 +32,7 @@ def process_siam(model, data_loader, optimizer=None, args=None):
         loss_siam = -(criterion_1(p1, z2).sum() + criterion_1(p2, z1).sum()) * 0.5
         loss_siam = loss_siam.cpu()
         total_loss_siam += loss_siam.item()
-
+        
         if args.use_pp_prediction:
             loss_pp = (criterion_2(pp1, batch['pp'].cuda()) + criterion_2(pp2, batch['pp'].cuda())) * 0.5
             loss_pp = loss_pp.cpu()
