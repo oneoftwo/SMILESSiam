@@ -1,7 +1,12 @@
+# data folder 
+!/data/
+/data/*
 !/data/*.py
-/data/**
 
+# save folder
 !/save/
-/save/**
+/save/*
+!/save/tmp.tmp
 
-
+# tmp files
+/__pycache__/
