@@ -1,54 +1,22 @@
-import numpy as np 
-import pandas as pd 
 import pickle
-from rdkit import Chem
-from tqdm import tqdm
-import sys
-import os
-import torch
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from util.process_mol.mol_property import mol_to_physical_property
+
+from _util_data import process_smiles_target_pair_list
+
 
 def preprocess_pubchem(fn, save_fn, num_to_get=10000):
-    """ 
-    graph sample list:
-        target: physical mol_property
-        
-    """
     f = open(fn, 'r')
-    data = []
-    line_list = []
+    
+    # get smiles (2* of num_to_get)
+    smiles_target_pair_list = []
     for line in f:
-        if len(line_list) < num_to_get * 2:
-            line_list.append(line)
+        if len(smiles_target_pair_list) < num_to_get * 2:
+            smiles_target_pair_list.append([line.strip().split()[1], None])
         else:
             break
 
-    for idx, line in enumerate(tqdm(line_list)):
-        try:
-            assert len(data) < num_to_get
+    sample_list = process_smiles_target_pair_list(smiles_target_pair_list, n_process=20)[:num_to_get]
 
-            line = line.strip().split()
-            sample = {}
-            
-            smiles = line[1]
-            smiles = Chem.MolToSmiles(Chem.MolFromSmiles(smiles))
-            
-            assert not '.' in smiles
-            
-            sample['smiles'] = smiles
-            sample['id'] = line[0]
-            
-            mol = Chem.MolFromSmiles(smiles)
-            sample['pp'] = mol_to_physical_property(mol)
-
-            data.append(sample)
-        except:
-            print(line)
-
-    print(len(data))
-    
-    pickle.dump(data, open(save_fn, 'wb'))
+    pickle.dump(sample_list, open(save_fn, 'wb'))
     
     print(f'saved at {save_fn}')
     

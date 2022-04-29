@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from multiprocessing import Pool
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
+from util.process_mol.mol_to_seq import get_random_smiles
 
 
 def run(smiles_list):
@@ -18,9 +19,10 @@ def run(smiles_list):
     for smiles in tqdm(smiles_list):
         
         original_smiles = smiles
+        
         mol = Chem.MolFromSmiles(smiles)
-        for _ in range(20):
-            smiles = Chem.MolToSmiles(mol, doRandom=True)
+        for _ in range(10):
+            smiles = get_random_smiles(smiles)
             for char in smiles:
                 if not char in c_to_i:
                     c_to_i.append(char)

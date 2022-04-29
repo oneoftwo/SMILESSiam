@@ -15,7 +15,8 @@ def process_siam(model, data_loader, optimizer=None, args=None):
 
     criterion_1 = nn.CosineSimilarity()
     criterion_2 = nn.MSELoss(reduction='sum')
-    total_loss, total_data, total_loss_siam, total_loss_pp = 0, 0, 0, 0
+    criterion_3 = nn.BCELoss(reduction='sum')
+    total_loss, total_data, total_loss_siam, total_loss_pp, total_loss_fp = 0, 0, 0, 0, 0
     start_time = time.time()
 
     result_dict = {}
@@ -28,16 +29,27 @@ def process_siam(model, data_loader, optimizer=None, args=None):
         
         if args.use_pp_prediction:
             pp1, pp2 = sample['pp1'], sample['pp2']
+        elif args.use_fp_prediction:
+            fp1, fp2 = sample['fp1'], sample['fp2']
         
         loss_siam = -(criterion_1(p1, z2).sum() + criterion_1(p2, z1).sum()) * 0.5
         loss_siam = loss_siam.cpu()
+        if args.no_use_siam:
+            loss_siam = loss_siam - loss_siam
         total_loss_siam += loss_siam.item()
         
         if args.use_pp_prediction:
-            loss_pp = (criterion_2(pp1, batch['pp'].cuda()) + criterion_2(pp2, batch['pp'].cuda())) * 0.5
+            loss_pp = (criterion_2(pp1, batch['pp'].cuda()) + \
+                    criterion_2(pp2, batch['pp'].cuda())) * 0.5
             loss_pp = loss_pp.cpu()
             loss = loss_siam + loss_pp * args.pp_loss_ratio
             total_loss_pp += loss_pp.item()
+        elif args.use_fp_prediction:
+            loss_fp = (criterion_3(fp1, batch['fp'].cuda()) + \
+                    criterion_3(fp2, batch['fp'].cuda())) * 0.5
+            loss_fp = loss_fp.cpu()
+            loss = loss_siam + loss_fp * args.fp_loss_ratio 
+            total_loss_fp += loss_fp.item()
         else:
             loss = loss_siam
 
@@ -52,7 +64,7 @@ def process_siam(model, data_loader, optimizer=None, args=None):
     
     all_z = torch.cat(all_z, dim=0)
     std = calc_latent_std(all_z)
-
+    
     result_dict['std'] = np.mean(std)
     result_dict['loss_siam'] = total_loss_siam / total_data 
 
@@ -110,7 +122,7 @@ def process_clf(model, data_loader, optimizer=None):
     return model, result_dict 
 
 
-def process_clf_validation_smiles_enumerate(model, data_loader, n_trial=100):
+def process_clf_validation_smiles_enumerate(model, data_loader, n_trial=16):
     # data_loader should not be shuffled !!!
     model.cuda()
     model.eval()
@@ -138,7 +150,7 @@ def process_clf_validation_smiles_enumerate(model, data_loader, n_trial=100):
         enm_pred_p_score = torch.cat(enm_pred_p_score, dim=0)
         enm_true_label = torch.cat(enm_true_label, dim=0)
         total_pred_p_score.append(enm_pred_p_score)
-
+    
     total_pred_p_score = torch.stack(total_pred_p_score, dim=0) # [n_trail, n_data]
     avg_pred_p_score = total_pred_p_score.mean(dim=0) # [n_data]
     avg_pred_p = torch.sigmoid(avg_pred_p_score) # apply sigmoid after

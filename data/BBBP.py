@@ -1,10 +1,10 @@
 import pickle
 import numpy as np
-from dgllife.data import HIV
+from dgllife.data import BBBP
 from _util_data import process_smiles_target_pair_list
 
 
-dataset = HIV()
+dataset = BBBP()
 
 smiles_target_pair_list = []
 for x in dataset:
@@ -20,5 +20,5 @@ sample_list = process_smiles_target_pair_list(smiles_target_pair_list, n_process
 
 print('number of processed data: ', len(sample_list))
 
-pickle.dump(sample_list, open('./HIV/HIV.pkl', 'wb'))
+pickle.dump(sample_list, open('./BBBP/BBBP.pkl', 'wb'))
 

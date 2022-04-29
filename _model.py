@@ -44,13 +44,14 @@ class LanguageModel(torch.nn.Module):
 
         h_forward = h[self.n_layer * 2 - 2]
         h_backward = h[self.n_layer * 2 - 1]
-
+        
         z = self.fc_head(torch.cat([h_forward, h_backward], dim=1))
         return z
 
 
 class SMILESSiam(torch.nn.Module):
-    def __init__(self, representation_model, use_pp_prediction=False):
+    def __init__(self, representation_model, use_pp_prediction=False, 
+            use_fp_prediction=False):
         super().__init__()
         
         self.representation_model = representation_model
@@ -75,13 +76,32 @@ class SMILESSiam(torch.nn.Module):
                     nn.BatchNorm1d(hid_dim),
                     nn.LeakyReLU(),
                     nn.Dropout(0.3),
-                    nn.Linear(hid_dim, hid_dim), #
-                    nn.BatchNorm1d(hid_dim),
+                    # nn.Linear(hid_dim, hid_dim), #
+                    # nn.BatchNorm1d(hid_dim),
+                    # nn.LeakyReLU(),
+                    # nn.Dropout(0.3),
+                    nn.Linear(hid_dim, 20) #
+                    )
+
+        self.use_fp_prediction = use_fp_prediction
+        fp_dim = 1024
+        if use_fp_prediction:
+            self.fc_fp = nn.Sequential(
+                    nn.Linear(hid_dim, fp_dim), #
+                    nn.BatchNorm1d(fp_dim),
                     nn.LeakyReLU(),
                     nn.Dropout(0.3),
-                    nn.Linear(hid_dim, 20)
+                    nn.Linear(fp_dim, fp_dim), #
+                    nn.BatchNorm1d(fp_dim),
+                    nn.LeakyReLU(),
+                    nn.Dropout(0.3),
+                    # nn.Linear(hid_dim, hid_dim), #
+                    # nn.BatchNorm1d(hid_dim),
+                    # nn.LeakyReLU(),
+                    # nn.Dropout(0.3),
+                    nn.Linear(fp_dim, fp_dim) #
                     )
-        
+
     def forward(self, seq_1, length_1, seq_2, length_2):
         
         z1 = self.representation_model(seq_1, length_1)
@@ -106,7 +126,7 @@ class SMILESSiam(torch.nn.Module):
     
     def get_latent(self, seq, length):
         z = self.representation_model(seq, length)
-        z = z.detach()
+        # z = z.detach() # not detaching gives better result
         return z
 
 
@@ -126,7 +146,29 @@ class SiamClf(torch.nn.Module):
                 nn.BatchNorm1d(hid_dim),
                 nn.LeakyReLU(),
                 nn.Dropout(0.3),
-                nn.Linear(hid_dim, hid_dim), #
+                nn.Linear(hid_dim, 1) # 
+                )
+
+    def forward(self, seq, length):
+        z = self.siam_model.get_latent(seq, length.long())
+        r = self.fc(z).squeeze(1)
+        return r
+
+
+class LanguageClfModel(torch.nn.Module):
+    def __init__(self, representation_model):
+        super().__init__()
+
+        self.representation_model = representation_model
+        hid_dim = representation_model.hid_dim
+        self.hid_dim = hid_dim
+        
+        self.fc = nn.Sequential(
+                nn.Linear(hid_dim, hid_dim),
+                nn.BatchNorm1d(hid_dim),
+                nn.LeakyReLU(),
+                nn.Dropout(0.3),
+                nn.Linear(hid_dim, hid_dim),
                 nn.BatchNorm1d(hid_dim),
                 nn.LeakyReLU(),
                 nn.Dropout(0.3),
@@ -134,10 +176,10 @@ class SiamClf(torch.nn.Module):
                 )
 
     def forward(self, seq, length):
-        z = self.siam_model.get_latent(seq, length)
+        z = self.representation_model(seq, length)
         r = self.fc(z).squeeze(1)
         return r
-
+        
 
 if __name__ == '__main__':
     pass 

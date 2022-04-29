@@ -34,6 +34,12 @@ def get_train_siam_args():
     parser.add_argument('--pp_loss_ratio', type=float, required=False,
             default=1.0)
 
+    parser.add_argument('--use_fp_prediction', required=False,
+            action='store_true', default=False)
+    
+    parser.add_argument('--no_use_siam', required=False,
+            action='store_true', default=False)
+
     args = parser.parse_args()
     
     if not args.save_dir == False:
@@ -44,11 +50,15 @@ def get_train_siam_args():
 
 
 def get_train_clf_args():
+    # also used for train clf control (some args are not used...)
+
     parser = argparse.ArgumentParser()
     
     # dir and fn
     parser.add_argument('--data_fn', type=str, required=False, 
-            default='./data/HIV/HIV.pkl')
+            default='./data/Tox21/Tox21_NR-AhR.pkl')
+    parser.add_argument('--siam_model_fn', type=str, required=False,
+            default='./save/siam/model_best.pt')
     parser.add_argument('--save_dir', type=str, required=False,
             default=False)
     
@@ -60,7 +70,7 @@ def get_train_clf_args():
 
     # train hyperparametes
     parser.add_argument('--bs', type=int, required=False,
-            default=128)
+            default=32)
     parser.add_argument('--lr', type=float, required=False,
             default=1e-4)
     parser.add_argument('--n_epoch', type=int, required=False,
@@ -68,6 +78,8 @@ def get_train_clf_args():
     parser.add_argument('--lr_decay', type=float, required=False,
             default=0.99)
 
+    parser.add_argument('--use_pp_prediction', required=False,
+            action='store_true', default=False)
     args = parser.parse_args()
     
     if not args.save_dir == False:

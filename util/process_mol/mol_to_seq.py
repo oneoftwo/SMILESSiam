@@ -80,6 +80,30 @@ def update_c_to_i(smiles_list, c_to_i=[], make_cannonical=False):
     return c_to_i
 
 
+def get_random_smiles(smiles, randint=100):
+    
+    def dummy_seed(randint):
+        for _ in range(random.randint(1, randint)):
+            Chem.MolToSmiles(Chem.MolFromSmiles('C'), doRandom=True)
+    if True:
+        if '.' in smiles:
+            smiles_list = smiles.split('.')
+        else:
+            smiles_list = [smiles]
+        mol_list = [Chem.MolFromSmiles(smiles) for smiles in smiles_list]
+        new_smiles_list = []
+        for mol in mol_list:
+            dummy_seed(randint=randint)
+            new_smiles_list.append(Chem.MolToSmiles(mol, doRandom=True))
+
+        random.shuffle(new_smiles_list)
+        new_smiles = ''
+        for smiles in new_smiles_list:
+            new_smiles += smiles
+            new_smiles += '.'
+        new_smiles = new_smiles[:-1]
+    return new_smiles
+
 
 if __name__ == '__main__':
     smiles = a

@@ -38,20 +38,32 @@ class SMILESDataset(Dataset):
 
         try:
             sample['pp'] = self.sample_list[idx]['pp']
+            # sample['fp'] = self.sample_list[idx]['fp'] #1024
         except:
             pass
 
         return sample
         
-
     def _pre_getitem(self, idx):
         sample = deepcopy(self.sample_list[idx])
         mol = Chem.MolFromSmiles(sample['smiles'])
         
+        """
         for _ in range(random.randint(1, 100)): # random seed problem
             Chem.MolToSmiles(Chem.MolFromSmiles('O'), doRandom=True)
-
-        smiles = Chem.MolToSmiles(mol, doRandom=True)
+        try:
+            smiles = Chem.MolToSmiles(mol, doRandom=True)
+        except:
+            print(sample['smiles'])
+            print('problem occured while getitem')
+        """
+        try:
+            smiles = get_random_smiles(sample['smiles'])
+            # smiles = sample['smiles']
+        except:
+            smiles = sample['smiles']
+            print(f'getitem failed to get random smiles: {smiles}')
+            smiles = sample['smiles']
 
         seq = self._smiles_to_seq(smiles)
         sample['seq'] = seq
@@ -99,7 +111,7 @@ def seq_collate_fn(batch):
         pass
 
     try:
-        sample['pp'] = torch.Tensor([x['pp'] for x in batch])
+        sample['pp'] = torch.Tensor([list(x['pp']) for x in batch])
     except:
         pass
 
@@ -107,15 +119,7 @@ def seq_collate_fn(batch):
 
 
 if __name__ == '__main__':
-    import pickle 
-    
-    sample_list = pickle.load(open('./data/HIV/HIV.pkl', 'rb'))
-    c_to_i = pickle.load(open('./data/c_to_i.pkl', 'rb'))
-
-    print(c_to_i)
-
-    a = SMILESDataset(sample_list, c_to_i)
-    print(a[2])
-    a = seq_collate_fn([a[0], a[1], a[2]])
-    print(a)
-
+    smiles = 'CCOC.CCC'
+    mol = get_random_smiles(smiles)
+    print(mol)
+        

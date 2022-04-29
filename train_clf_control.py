@@ -12,7 +12,7 @@ from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
 
 from _dataset import SMILESDataset, seq_collate_fn
-from _model import SiamClf, SMILESSiam, LanguageModel
+from _model import LanguageClfModel, LanguageModel
 import _train as TRAIN
 import _argument as ARGUMENT
 from util.sys.sys import set_cuda_visible_devices
@@ -20,13 +20,13 @@ from util.sys.sys import set_cuda_visible_devices
 
 def main(args):
     
-    print('\ntrain_clf.py\n')
+    print('\ntrain_clf_control.py\n')
     print('#' * 80 + '\n')
     
     set_cuda_visible_devices(is_print=True, ngpus=1)
     print()
 
-    # args = ARGUMENT.get_train_clf_args()
+    # args = ARGUMENT.get_train_clf_args() # check
     
     for x in vars(args):
         print(f'{x}: {vars(args)[x]}')
@@ -48,12 +48,9 @@ def main(args):
     print(f'positive data: {len([x for x in valid_set if x["target"] == 1])}')
     print(f'negative data: {len([x for x in valid_set if x["target"] == 0])}\n')
     print(c_to_i, '\n')
-
-    siam_model_state_dict_fn = args.siam_model_fn
+    
     representation_model = LanguageModel(n_char=len(c_to_i), hid_dim=args.hid_dim, n_layer=args.n_layer)
-    siam_model = SMILESSiam(representation_model, use_pp_prediction=args.use_pp_prediction)
-    siam_model.load_state_dict(torch.load(siam_model_state_dict_fn))
-    clf_model = SiamClf(siam_model)
+    clf_model = LanguageClfModel(representation_model)
 
     print(f'{clf_model}\n')
     print(f"|{'epoch':^8}|" + 
@@ -107,7 +104,7 @@ def main(args):
         if tol > 30:
             print('early stop')
             break
-    
+
     print('\n best result')
     print(best_result)
     
@@ -115,7 +112,7 @@ def main(args):
 
     return best_result
 
-    
+
 if __name__ == '__main__':
     args = ARGUMENT.get_train_clf_args()
     main(args)

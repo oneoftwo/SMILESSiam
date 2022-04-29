@@ -16,6 +16,8 @@ from util.train.evaluate import count_learnable_parameters
 from _model import SMILESSiam, LanguageModel
 from torch.utils.data import DataLoader
 
+from rdkit import RDLogger
+RDLogger.DisableLog('rdApp.*')
 
 def main():
     
@@ -71,7 +73,7 @@ def main():
     
     # train model and validate
     lr = args.lr
-    for epoch in range(1, args.bs + 1):
+    for epoch in range(1, args.n_epoch + 1):
         optimizer = optim.SGD(siam_model.parameters(), lr=lr)
         siam_model, train_result = \
                 TRAIN.process_siam(siam_model, train_loader, optimizer=optimizer, args=args)
