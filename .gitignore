@@ -8,7 +8,12 @@
 /save/*
 !/save/tmp.tmp
 
+# jobscript related
+*.x
+LJW_*
+
 # tmp files
 /__pycache__/
+
 
 
